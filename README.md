@@ -3,6 +3,12 @@
 For most C programs, manual memory management with malloc/free remains the standard approach. Garbage collection is more commonly used in higher-level languages 
 like Java, Python, or Go, where the benefits of automatic memory management often outweigh the costs.
 
+The main motivation for creating a garbage collector is to simplify memory management in C programs. C is a powerful language, but it requires manual memory management, which can lead to issues like memory leaks, dangling pointers, and double frees. These problems can be difficult to debug and can cause program crashes or unpredictable behavior.
+
+While not suitable for production use, this project serves as an excellent learning tool for understanding garbage collection concepts and how they can be implemented in a low-level language like C.
+
+The implementation is intentionally kept simple to make it easy to understand and modify. This makes it a good starting point for further experimentation or for educational purposes. 
+
 ## License
 [![Licence](https://img.shields.io/github/license/Ileriayo/markdown-badges?style=for-the-badge)](./LICENSE)
 
