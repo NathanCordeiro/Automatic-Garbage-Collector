@@ -82,3 +82,130 @@ Drawbacks:
 - Less predictable memory usage and deallocation timing
 - May not be suitable for real-time or memory-constrained systems
 
+
+
+## Some examples of HeapSweep
+
+`Factorial of a number:`
+```c
+#include "simple_gc.h"
+#include <stdio.h>
+
+GCValue* factorial(GCHeap* heap, int n) {
+    if (n <= 1) {
+        return createIntValue(heap, 1);
+    }
+    
+    GCValue* n_minus_one = factorial(heap, n - 1);
+    pushValue(heap, n_minus_one);  // Protect from GC
+    
+    GCValue* result = createIntValue(heap, n * n_minus_one->intValue);
+    popValue(heap);  // n_minus_one no longer needed
+    
+    return result;
+}
+
+int main() {
+    GCHeap heap;
+    initGCHeap(&heap);
+
+    int n = 5;
+    GCValue* result = factorial(&heap, n);
+    printf("Factorial of %d is %d\n", n, result->intValue);
+
+    collectGarbage(&heap);
+    freeGCHeap(&heap);
+    return 0;
+}
+```
+
+`Pointer demonstration creating array like structures:`
+```c
+#include "simple_gc.h"
+#include <stdio.h>
+
+void swapValues(GCHeap* heap, GCValue** a, GCValue** b) {
+    GCValue* temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+int main() {
+    GCHeap heap;
+    initGCHeap(&heap);
+
+    GCValue* value1 = createIntValue(&heap, 10);
+    GCValue* value2 = createIntValue(&heap, 20);
+
+    pushValue(&heap, value1);
+    pushValue(&heap, value2);
+
+    printf("Before swap: value1 = %d, value2 = %d\n", value1->intValue, value2->intValue);
+
+    swapValues(&heap, &value1, &value2);
+
+    printf("After swap: value1 = %d, value2 = %d\n", value1->intValue, value2->intValue);
+
+    // Create a pointer to a pointer (simulating a 2D array)
+    GCValue* array[2];
+    array[0] = createPairValue(&heap, createIntValue(&heap, 1), createIntValue(&heap, 2));
+    array[1] = createPairValue(&heap, createIntValue(&heap, 3), createIntValue(&heap, 4));
+
+    pushValue(&heap, array[0]);
+    pushValue(&heap, array[1]);
+
+    printf("2D array: [%d, %d], [%d, %d]\n",
+           array[0]->pairValue.head->intValue, array[0]->pairValue.tail->intValue,
+           array[1]->pairValue.head->intValue, array[1]->pairValue.tail->intValue);
+
+    collectGarbage(&heap);
+    freeGCHeap(&heap);
+    return 0;
+}
+```
+
+`Linked list demonstrating creating and manipulating complex data structures:`
+```c
+#include "simple_gc.h"
+#include <stdio.h>
+
+void printList(GCValue* head) {
+    GCValue* current = head;
+    while (current != NULL && current->type == VALUE_PAIR) {
+        printf("%d -> ", current->pairValue.head->intValue);
+        current = current->pairValue.tail;
+    }
+    printf("NULL\n");
+}
+
+int main() {
+    GCHeap heap;
+    initGCHeap(&heap);
+
+    // Create a linked list: 1 -> 2 -> 3 -> 4 -> 5
+    GCValue* list = NULL;
+    for (int i = 5; i >= 1; i--) {
+        GCValue* newNode = createPairValue(&heap, createIntValue(&heap, i), list);
+        pushValue(&heap, newNode);  // Protect from GC
+        list = newNode;
+    }
+
+    printf("Original list: ");
+    printList(list);
+
+    // Remove the second element (2)
+    if (list != NULL && list->pairValue.tail != NULL) {
+        list->pairValue.tail = list->pairValue.tail->pairValue.tail;
+    }
+
+    printf("List after removing second element: ");
+    printList(list);
+
+    collectGarbage(&heap);
+    freeGCHeap(&heap);
+    return 0;
+}
+```
+
+
+
