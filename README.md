@@ -9,6 +9,11 @@ While not suitable for production use, this project serves as an excellent learn
 
 The implementation is intentionally kept simple to make it easy to understand and modify. This makes it a good starting point for further experimentation or for educational purposes. 
 
+The project uses a simple yet effective garbage collection algorithm. It works in two phases:
+
+- Mark: Starting from known root objects (those on the stack), it traverses and marks all reachable objects.
+- Sweep: It then goes through all objects in the heap, freeing those that weren't marked.
+
 ## License
 [![Licence](https://img.shields.io/github/license/Ileriayo/markdown-badges?style=for-the-badge)](./LICENSE)
 
