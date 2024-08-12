@@ -22,7 +22,7 @@ like Java, Python, or Go, where the benefits of automatic memory management ofte
 | **Flexibility**                           | -                                                                                                          | -                                                                                                          | -                                                                                                          | More flexible for general-purpose use                                                          |
 
 
-## Using the GC in your project
+## Using HeapSweep in your project
 
 1. Include the files:
    Add `simple_gc.h` and `simple_gc.c` to your project.
@@ -67,5 +67,18 @@ like Java, Python, or Go, where the benefits of automatic memory management ofte
 
 
 
+## Advantages and Disadvantages of HeapSweep
 
+Benefits:
+
+- Automatic memory management reduces cognitive load on programmers
+- Helps prevent memory leaks and use-after-free bugs
+- Can handle complex data structures with cyclic references
+- Allows for more natural expression of certain algorithms
+
+Drawbacks:
+
+- Added runtime overhead for GC operations
+- Less predictable memory usage and deallocation timing
+- May not be suitable for real-time or memory-constrained systems
 
