@@ -56,6 +56,12 @@ typedef struct {
 } GCHeap;
 ```
 You initialize it with `initGCHeap(&heap)` and free it with `freeGCHeap(&heap)`.
+- stack: A stack of GCValue* pointers to protect values from garbage collection.
+- stackSize: The current size of the stack.
+- firstValue: Points to the first GCValue in the managed list.
+- numValues: The number of values currently managed.
+- maxValues: The maximum number of values before triggering garbage collection.
+- heapStart, heapEnd, freePtr: Pointers managing the start, end, and current free space of the heap.
 
 6. Stack Operations:
 To protect values from being collected, you use:
