@@ -92,9 +92,28 @@ void collectGarbage(GCHeap* heap) {
     printf("Collected %zu values, %zu remaining.\n", numValues - heap->numValues, heap->numValues);
 }
 
+// Creation functions
 GCValue* createIntValue(GCHeap* heap, int value) {
     GCValue* gcValue = allocateValue(heap, VALUE_INT);
     gcValue->intValue = value;
+    return gcValue;
+}
+
+GCValue* createFloatValue(GCHeap* heap, float value) {
+    GCValue* gcValue = allocateValue(heap, VALUE_FLOAT);
+    gcValue->floatValue = value;
+    return gcValue;
+}
+
+GCValue* createDoubleValue(GCHeap* heap, double value) {
+    GCValue* gcValue = allocateValue(heap, VALUE_DOUBLE);
+    gcValue->doubleValue = value;
+    return gcValue;
+}
+
+GCValue* createCharValue(GCHeap* heap, char value) {
+    GCValue* gcValue = allocateValue(heap, VALUE_CHAR);
+    gcValue->charValue = value;
     return gcValue;
 }
 
@@ -103,4 +122,71 @@ GCValue* createPairValue(GCHeap* heap, GCValue* head, GCValue* tail) {
     gcValue->pairValue.head = head;
     gcValue->pairValue.tail = tail;
     return gcValue;
+}
+
+GCValue* createEnumValue(GCHeap* heap, int enumValue) {
+    GCValue* gcValue = allocateValue(heap, VALUE_ENUM);
+    gcValue->enumValue = enumValue;
+    return gcValue;
+}
+
+GCValue* createUnionValue(GCHeap* heap, int tag, void* data) {
+    GCValue* gcValue = allocateValue(heap, VALUE_UNION);
+    gcValue->unionValue.tag = tag;
+    switch (tag) {
+        case 0: gcValue->unionValue.data.intMember = *(int*)data; break;
+        case 1: gcValue->unionValue.data.floatMember = *(float*)data; break;
+        case 2: gcValue->unionValue.data.doubleMember = *(double*)data; break;
+        case 3: gcValue->unionValue.data.charMember = *(char*)data; break;
+    }
+    return gcValue;
+}
+
+// Type conversion functions
+GCValue* convertToInt(GCHeap* heap, GCValue* value) {
+    int result;
+    switch (value->type) {
+        case VALUE_INT: return value;
+        case VALUE_FLOAT: result = (int)value->floatValue; break;
+        case VALUE_DOUBLE: result = (int)value->doubleValue; break;
+        case VALUE_CHAR: result = (int)value->charValue; break;
+        default: return NULL; // Conversion not supported
+    }
+    return createIntValue(heap, result);
+}
+
+GCValue* convertToFloat(GCHeap* heap, GCValue* value) {
+    float result;
+    switch (value->type) {
+        case VALUE_FLOAT: return value;
+        case VALUE_INT: result = (float)value->intValue; break;
+        case VALUE_DOUBLE: result = (float)value->doubleValue; break;
+        case VALUE_CHAR: result = (float)value->charValue; break;
+        default: return NULL; // Conversion not supported
+    }
+    return createFloatValue(heap, result);
+}
+
+GCValue* convertToDouble(GCHeap* heap, GCValue* value) {
+    double result;
+    switch (value->type) {
+        case VALUE_DOUBLE: return value;
+        case VALUE_INT: result = (double)value->intValue; break;
+        case VALUE_FLOAT: result = (double)value->floatValue; break;
+        case VALUE_CHAR: result = (double)value->charValue; break;
+        default: return NULL; // Conversion not supported
+    }
+    return createDoubleValue(heap, result);
+}
+
+GCValue* convertToChar(GCHeap* heap, GCValue* value) {
+    char result;
+    switch (value->type) {
+        case VALUE_CHAR: return value;
+        case VALUE_INT: result = (char)value->intValue; break;
+        case VALUE_FLOAT: result = (char)value->floatValue; break;
+        case VALUE_DOUBLE: result = (char)value->doubleValue; break;
+        default: return NULL; // Conversion not supported
+    }
+    return createCharValue(heap, result);
 }
