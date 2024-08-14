@@ -10,6 +10,7 @@ void initGCHeap(GCHeap* heap) {
     heap->heapStart = (uint8_t*)malloc(HEAP_SIZE);
     heap->heapEnd = heap->heapStart + HEAP_SIZE;
     heap->freePtr = heap->heapStart;
+    heap->compactionPtr = heap->heapStart;
 }
 
 void freeGCHeap(GCHeap* heap) {
@@ -21,8 +22,11 @@ void freeGCHeap(GCHeap* heap) {
 }
 
 GCValue* allocateValue(GCHeap* heap, ValueType type) {
-    if (heap->numValues == heap->maxValues) collectGarbage(heap);
+    if (heap->numValues == heap->maxValues) {
+        collectGarbage(heap);
+    }
 
+    // Allocate space for the GCValue
     GCValue* value = (GCValue*)heap->freePtr;
     heap->freePtr += sizeof(GCValue);
 
@@ -76,8 +80,9 @@ void sweepUnmarkedValues(GCHeap* heap) {
             GCValue* unreached = *value;
             *value = unreached->next;
             heap->numValues--;
+            free(unreached);  // Free the memory occupied by the unreached object
         } else {
-            (*value)->marked = 0;
+            (*value)->marked = 0;  // Reset the mark for the next GC cycle
             value = &(*value)->next;
         }
     }
@@ -87,10 +92,55 @@ void collectGarbage(GCHeap* heap) {
     size_t numValues = heap->numValues;
     markAllValues(heap);
     sweepUnmarkedValues(heap);
+    compactMemory(heap);
     heap->maxValues = heap->numValues * 2;
 
     printf("Collected %zu values, %zu remaining.\n", numValues - heap->numValues, heap->numValues);
 }
+
+void compactMemory(GCHeap* heap) {
+    GCValue* current = heap->firstValue;
+    uint8_t* newFreePtr = heap->heapStart;
+    GCValue* prev = NULL;
+
+    // Move live objects to the beginning of the heap
+    while (current) {
+        if (current->marked) {
+            size_t size = sizeof(GCValue);
+            if (newFreePtr + size > heap->heapEnd) {
+                fprintf(stderr, "Out of memory during compaction\n");
+                exit(1);
+            }
+
+            // Move the object to the new location
+            GCValue* newLocation = (GCValue*)newFreePtr;
+            memcpy(newLocation, current, size);
+            newFreePtr += size;
+
+            // Update linked list pointers
+            if (prev) {
+                prev->next = newLocation;
+            } else {
+                heap->firstValue = newLocation;
+            }
+            newLocation->next = NULL;
+
+            // Update stack pointers
+            for (int i = 0; i < heap->stackSize; i++) {
+                if (heap->stack[i] == current) {
+                    heap->stack[i] = newLocation;
+                }
+            }
+
+            prev = newLocation;
+        }
+        current = current->next;
+    }
+
+    // Update freePtr
+    heap->freePtr = newFreePtr;
+}
+
 
 // Creation functions
 GCValue* createIntValue(GCHeap* heap, int value) {
@@ -138,12 +188,15 @@ GCValue* createUnionValue(GCHeap* heap, int tag, void* data) {
         case 1: gcValue->unionValue.data.floatMember = *(float*)data; break;
         case 2: gcValue->unionValue.data.doubleMember = *(double*)data; break;
         case 3: gcValue->unionValue.data.charMember = *(char*)data; break;
+        default: fprintf(stderr, "Invalid tag for union\n"); exit(1);
     }
     return gcValue;
 }
 
 // Type conversion functions
 GCValue* convertToInt(GCHeap* heap, GCValue* value) {
+    if (checkNullPointer(value) || !checkTypeConversion(value, VALUE_INT)) return NULL;
+
     int result;
     switch (value->type) {
         case VALUE_INT: return value;
@@ -156,6 +209,8 @@ GCValue* convertToInt(GCHeap* heap, GCValue* value) {
 }
 
 GCValue* convertToFloat(GCHeap* heap, GCValue* value) {
+    if (checkNullPointer(value) || !checkTypeConversion(value, VALUE_FLOAT)) return NULL;
+
     float result;
     switch (value->type) {
         case VALUE_FLOAT: return value;
@@ -168,6 +223,8 @@ GCValue* convertToFloat(GCHeap* heap, GCValue* value) {
 }
 
 GCValue* convertToDouble(GCHeap* heap, GCValue* value) {
+    if (checkNullPointer(value) || !checkTypeConversion(value, VALUE_DOUBLE)) return NULL;
+
     double result;
     switch (value->type) {
         case VALUE_DOUBLE: return value;
@@ -180,6 +237,8 @@ GCValue* convertToDouble(GCHeap* heap, GCValue* value) {
 }
 
 GCValue* convertToChar(GCHeap* heap, GCValue* value) {
+    if (checkNullPointer(value) || !checkTypeConversion(value, VALUE_CHAR)) return NULL;
+
     char result;
     switch (value->type) {
         case VALUE_CHAR: return value;
@@ -189,4 +248,22 @@ GCValue* convertToChar(GCHeap* heap, GCValue* value) {
         default: return NULL; // Conversion not supported
     }
     return createCharValue(heap, result);
+}
+
+// Error handling functions
+int checkNullPointer(GCValue* value) {
+    if (value == NULL) {
+        fprintf(stderr, "Error: NULL pointer\n");
+        return 1;
+    }
+    return 0;
+}
+
+int checkTypeConversion(GCValue* value, ValueType expectedType) {
+    if (value->type == expectedType) {
+        return 1;
+    } else {
+        fprintf(stderr, "Error: Type conversion from %d to %d not supported\n", value->type, expectedType);
+        return 0;
+    }
 }
