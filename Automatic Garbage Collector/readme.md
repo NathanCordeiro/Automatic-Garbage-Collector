@@ -126,6 +126,13 @@ The library includes functions for handling common errors:
 - `checkNullPointer`: Checks for null pointers.
 - `checkTypeConversion`: Validates type conversions.
 
+## Limitations:
+- Fixed-size heap (1MB by default).
+- Maximum stack size of 256 elements.
+- No support for custom destructors or finalizers.
+
+
+## Conclusion:
 This design means that instead of using native C types directly, you're always working with `GCValue*` pointers. This allows the garbage collector to manage all the memory for you, but it does require you to use the provided functions to create and manipulate values.
 
 
