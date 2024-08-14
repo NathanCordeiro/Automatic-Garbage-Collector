@@ -52,6 +52,7 @@ typedef struct {
     uint8_t* heapStart;
     uint8_t* heapEnd;
     uint8_t* freePtr;
+    uint8_t* compactionPtr;
 } GCHeap;
 
 void initGCHeap(GCHeap* heap);
@@ -77,5 +78,9 @@ GCValue* convertToInt(GCHeap* heap, GCValue* value);
 GCValue* convertToFloat(GCHeap* heap, GCValue* value);
 GCValue* convertToDouble(GCHeap* heap, GCValue* value);
 GCValue* convertToChar(GCHeap* heap, GCValue* value);
+
+// Error handling functions
+int checkNullPointer(GCValue* value);
+int checkTypeConversion(GCValue* value, ValueType expectedType);
 
 #endif // SIMPLE_GC_H
