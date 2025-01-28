@@ -220,4 +220,4 @@ int main() {
 
 ---
 
-![Last Stargazer](https://img.shields.io/badge/Last%20Stargazer-None-lightgrey?style=flat-square)
+![Last Stargazer](https://img.shields.io/badge/Last%20Stargazer-wldhks1959-brightgreen?style=flat-square)
